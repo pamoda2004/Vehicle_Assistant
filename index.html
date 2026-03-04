@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Vehicle Buying Assistant</title>
+  <link rel="stylesheet" href="style.css" />
+
+</head>
+
+<body>
+
+  <div class="container">
+    <h1>🚗 AI Vehicle Buying Assistant</h1>
+
+    <div class="search-box">
+      <input id="query" placeholder="Type your vehicle needs (eg: low budget electric car)" />
+      <button onclick="searchCars()">🔍 Search AI</button>
+    </div>
+
+    <div id="results"></div>
+
+    <footer>🤖 Powered by AI Recommendation Engine</footer>
+  </div>
+
+  <script>
+    async function searchCars() {
+      const query = document.getElementById("query").value.trim();
+      const resultsDiv = document.getElementById("results");
+
+      if (!query) {
+        resultsDiv.innerHTML = `<div class="msg">⚠️ Please enter your requirement</div>`;
+        return;
+      }
+
+      resultsDiv.innerHTML = `<div class="msg">⏳ AI is finding best vehicles for you...</div>`;
+
+      try {
+        const res = await fetch("http://127.0.0.1:8000/recommend", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: query, top_n: 5 })
+        });
+
+        const data = await res.json();
+
+        if (!data.results || data.results.length === 0) {
+          resultsDiv.innerHTML = `<div class="msg">😕 No vehicles found</div>`;
+          return;
+        }
+
+        let html = "";
+        data.results.forEach(car => {
+          html += `
+        <div class="card">
+          <h3>${car.brand} - ${car.model}</h3>
+          <p>💰 <b>Price:</b> ${car.price}</p>
+          <p>⛽ ${car.fuel} | ⚙ ${car.transmission}</p>
+          <p>📅 ${car.year} | 🧍 Seats: ${car.seats}</p>
+          <p>⭐ Score: ${Number(car.score).toFixed(2)}</p>
+          <p><b>Why:</b> ${car.why.join(", ")}</p>
+        </div>
+      `;
+        });
+
+        resultsDiv.innerHTML = html;
+
+      } catch (err) {
+        resultsDiv.innerHTML = `
+      <div class="msg">
+      ❌ Backend not connected<br>
+      ✔ Start FastAPI on port 8000<br>
+      ✔ Enable CORS
+      </div>
+    `;
+        console.error(err);
+      }
+    }
+  </script>
+
+</body>
+
+</html>
